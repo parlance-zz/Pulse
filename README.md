@@ -11,25 +11,15 @@ How it works:
 Caveats:
 - There's at least a few more viable versions of this idea in my old code files that are all somewhat different. There is another version in particular that uses a log-linear sliding DFT rather than a linear DFT; that version has a large number of advantages over this one but is also more complex.
 - The LG "hyper-parameters" are probably still poorly optimized. Experiment with these values:
-
-#define SURFACE_DFT_LENGTH						2048
-
-#define SURFACE_LG_NUM_UNITS					128
-
-#define SURFACE_LG_NUM_OCTAVES					8.0f
-
-#define SURFACE_LG_BANDWIDTH					0.70f
-
-#define SURFACE_LG_STD							8.0f
-
-#define SURFACE_INPUT_DFT_NOISE					0.00001f
-
-#define SURFACE_OUTPUT_DFT_NOISE				0.00001f
-
-#define SURFACE_LG_SPIKE_MIN_POW				0.00001f
-
-#define SURFACE_LG_SPIKE_THRESHOLD				1.0f 
-
-#define SURFACE_LG_SPIKE_POW_RATIO				1.618f
-
-#define SURFACE_LG_SPIKE_DECAY					0.88f
+    - SURFACE_DFT_LENGTH
+    - SURFACE_LG_NUM_UNITS
+    - SURFACE_LG_NUM_OCTAVES
+    - SURFACE_LG_BANDWIDTH
+    - SURFACE_LG_STD
+    - SURFACE_INPUT_DFT_NOISE
+    - SURFACE_OUTPUT_DFT_NOISE
+    - SURFACE_LG_SPIKE_MIN_POW
+    - SURFACE_LG_SPIKE_THRESHOLD
+    - SURFACE_LG_SPIKE_POW_RATIO
+    - SURFACE_LG_SPIKE_DECAY
+- The utility does not compress the quantized interval files (which can get a bit large due to the number of lg filters and lack of unused bit reduction in serialization). The less overall "spike density" the more compressible these files would theoretically be.
