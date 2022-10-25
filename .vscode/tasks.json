@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build release",
             "type": "shell",
             "command": "g++",
             "args": [
@@ -16,6 +16,21 @@
                 "kind": "build",
                 "isDefault": true
             },
-        }
+        },
+        {
+            "label": "build debug",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "-march=alderlake",
+                "./Pulse/*.cpp",
+                "-o",
+                "./Pulse/x64/Debug/Pulse.exe"
+            ],
+            "group": {
+                "kind": "build",
+            },
+        }        
     ],
 }
