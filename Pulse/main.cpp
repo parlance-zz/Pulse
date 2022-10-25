@@ -81,9 +81,10 @@ int main(int argc, char *argv[])
 			vector<float> outputSample(sampleLength);
 			auto startTime = chrono::high_resolution_clock::now();
 			
+			const float normalizingOutputGain = 0.1f; //todo:
 			for (int i = 0; i < sampleLength; i++)
 			{
-				outputSample[i] = surface.Output();
+				outputSample[i] = surface.Output() * normalizingOutputGain;
 				if ((i % 32768) == 0) printf(".");
 			}
 			 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
 			FILE *outFile = fopen(outputPath.c_str(), "wb");
 			if (outFile)
 			{
-				fwrite(&outputSample[0], 1, SURFACE_LG_NUM_CHANNELS * sizeof(float) * sampleLength, outFile);
+				fwrite(&outputSample[SURFACE_DFT_LENGTH], 1, SURFACE_LG_NUM_CHANNELS * sizeof(float) * (sampleLength-SURFACE_DFT_LENGTH), outFile);
 				fclose(outFile);
 			}
 			else
