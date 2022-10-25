@@ -1,0 +1,14 @@
+FFMpeg/*
+*.pdb
+*.ilk
+*.obj
+*.exe
+*.dll
+*.lib
+*.exp
+*.o
+*.a
+*.so
+*.raw
+*.mp3
+*.flac

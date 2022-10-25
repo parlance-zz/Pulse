@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Pulse Quantize",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "Pulse/x64/Release/Pulse.exe",
+            "args": ["-q", "Datasets/Raw/input.raw", "Datasets/Quants/output.q"],
+            "console": "integratedTerminal",
+            "cwd":"${workspaceRoot}",
+            "preLaunchTask": "build",
+        },
+        {
+            "name": "Pulse Dequantize",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "Pulse/x64/Release/Pulse.exe",
+            "args": ["-d", "Datasets/Quants/output.q", "Datasets/Raw/input_dequantized.raw"],
+            "console": "integratedTerminal",
+            "cwd":"${workspaceRoot}",
+            "preLaunchTask": "build",
+        }        
+    ],
+}

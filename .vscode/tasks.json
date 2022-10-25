@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-march=alderlake",
+                "-O3",
+                "./Pulse/*.cpp",
+                "-o",
+                "./Pulse/x64/Release/Pulse.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        }
+    ],
+}
