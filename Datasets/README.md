@@ -1,0 +1,1 @@
+Scripts to decompress -> quantize -> dequantize dataset (build Pulse and download ffmpeg before running these)
