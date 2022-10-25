@@ -516,7 +516,7 @@ struct SURFACE
 			uint64_t numIntervals = lgSpikeIntervals[lg].size();
 			fwrite(&numIntervals, 1, sizeof(uint64_t), outFile);
 			fwrite(&lgSpikeIntervals[lg][0], 1, numIntervals, outFile);
-			printf("lg: %i spike density: %.2f%%\n", lg, float(numIntervals) / float(ticks));
+			printf("lg: %i spike density: %.2f%%\n", lg, 100.0f*float(numIntervals) / float(ticks));
 		}
 
 		fclose(outFile);
