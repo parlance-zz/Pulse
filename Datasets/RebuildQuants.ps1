@@ -3,7 +3,7 @@ $errorActionPreference = "Stop"
 $sourcePath = "Raw"
 $destPath = "Quants"
 $pulsePath = "..\Pulse\x64\Release"
-$MAX_JOBS = 16
+$MAX_JOBS = 8
 
 $sourceFiles = Get-ChildItem ($sourcePath) -Recurse
 
