@@ -4,7 +4,7 @@ $ffmpegPath = "..\FFMpeg\bin"
 
 $tempPath = "Temp\temp" + ([string](Get-Random)) + ".raw"
 
-$sourceFiles = Get-ChildItem ($sourcePath)
+$sourceFiles = Get-ChildItem ($sourcePath) -Recurse
 
 ForEach ($source in $sourceFiles)
 {
