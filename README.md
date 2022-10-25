@@ -13,15 +13,23 @@ Caveats:
 - The LG "hyper-parameters" are probably still poorly optimized. Experiment with these values:
 
 #define SURFACE_DFT_LENGTH						2048
+
 #define SURFACE_LG_NUM_UNITS					128
+
 #define SURFACE_LG_NUM_OCTAVES					8.0f
+
 #define SURFACE_LG_BANDWIDTH					0.70f
+
 #define SURFACE_LG_STD							8.0f
 
 #define SURFACE_INPUT_DFT_NOISE					0.00001f
+
 #define SURFACE_OUTPUT_DFT_NOISE				0.00001f
 
 #define SURFACE_LG_SPIKE_MIN_POW				0.00001f
+
 #define SURFACE_LG_SPIKE_THRESHOLD				1.0f 
+
 #define SURFACE_LG_SPIKE_POW_RATIO				1.618f
+
 #define SURFACE_LG_SPIKE_DECAY					0.88f
