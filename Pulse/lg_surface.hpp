@@ -486,10 +486,14 @@ struct SURFACE
 			int64_t interval = ticks - lgLastSpikeTick[lg];
 			if (interval == 0)
 			{
-				out_lgP[lg] *= SURFACE_LG_SPIKE_POW_RATIO;
-				lgLastSpikeTick[lg] += DequantizeInterval(lgSpikeIntervals[lg][lgSpikeCount[lg]]);
-				lgSpikeCount[lg]++;
-				totalActivity++;
+				const int numIntervals = lgSpikeIntervals[lg].size();
+				if (lgSpikeCount[lg] < numIntervals)
+				{
+					out_lgP[lg] *= SURFACE_LG_SPIKE_POW_RATIO;
+					lgLastSpikeTick[lg] += DequantizeInterval(lgSpikeIntervals[lg][lgSpikeCount[lg]]);
+					lgSpikeCount[lg]++;
+					totalActivity++;
+				}
 			}
 
 			out_lgP[lg] *= lgParams[lg].decay;
@@ -534,7 +538,7 @@ struct SURFACE
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg++)
 		{
 			uint64_t numIntervals; fread(&numIntervals, 1, sizeof(uint64_t), inFile);
-			lgSpikeIntervals[lg].resize(numIntervals+1); fread(&lgSpikeIntervals[lg][0], 1, numIntervals, inFile);
+			lgSpikeIntervals[lg].resize(numIntervals); fread(&lgSpikeIntervals[lg][0], 1, numIntervals, inFile);
 		}
 
 		fclose(inFile);
