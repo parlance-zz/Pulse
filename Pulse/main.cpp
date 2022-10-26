@@ -81,13 +81,15 @@ int main(int argc, char *argv[])
 			vector<float> outputSample(sampleLength);
 			auto startTime = chrono::high_resolution_clock::now();
 			
-			const float normalizingOutputGain = 0.1f; //todo:
 			for (int i = 0; i < sampleLength; i++)
 			{
-				outputSample[i] = surface.Output() * normalizingOutputGain;
+				outputSample[i] = surface.Output();
 				if ((i % 32768) == 0) printf(".");
 			}
-			 
+			outputSample = vector(outputSample.begin() + SURFACE_DFT_LENGTH, outputSample.end()); // re-align by compensating for dft delay
+			int outputBufferLen = 0; float *outputBuffer = surface.lgFilters.GetAlignedCopy(outputSample, &outputBufferLen);
+			surface.lgFilters.Normalize(outputBuffer, outputBufferLen); // normalize amplitude to 1.
+
 			auto finishTime = chrono::high_resolution_clock::now(); auto durationTime = chrono::duration_cast<std::chrono::microseconds>(finishTime - startTime); int seconds = int(durationTime.count() / 1000000);
 			int millisecs = int((durationTime.count() - int64_t(seconds) * 1000000) / 1000); printf("Elapsed time : %i.%i\n", seconds, millisecs);
 
@@ -95,7 +97,7 @@ int main(int argc, char *argv[])
 			FILE *outFile = fopen(outputPath.c_str(), "wb");
 			if (outFile)
 			{
-				fwrite(&outputSample[SURFACE_DFT_LENGTH], 1, SURFACE_LG_NUM_CHANNELS * sizeof(float) * (sampleLength-SURFACE_DFT_LENGTH), outFile);
+				fwrite(outputBuffer, 1, outputBufferLen  * sizeof(float), outFile);
 				fclose(outFile);
 			}
 			else

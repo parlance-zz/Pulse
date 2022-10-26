@@ -55,6 +55,17 @@ inline float hsum256_ps_avx(const __m256 v)
 	return hsum_ps_sse3(_mm_add_ps(vlow, vhigh));	
 }
 
+inline __m256 hmax_ps_avx(const __m256 v1)
+{
+    __m256 v2 = _mm256_permute_ps(v1, 0b10'11'00'01);
+    __m256 v3 = _mm256_max_ps(v1, v2); 
+    __m256 v4 = _mm256_permute_ps(v3, 0b00'00'10'10);
+    __m256 v5 = _mm256_max_ps(v3, v4);
+    __m128 v6 = _mm256_extractf128_ps(v5, 1);
+    __m128 v7 = _mm_max_ps(_mm256_castps256_ps128(v5), v6);
+	return _mm256_insertf128_ps(_mm256_castps128_ps256(v7), v7, 1);
+}
+
 struct LG_PARAMS { float q, std, gain, outWeight, decay; };
 
 struct FILTER_SET
@@ -181,13 +192,29 @@ struct FILTER_SET
 		}
 	}
 
-	void Normalize(float *buff, int bufferLen)
+	float Normalize(_ALIGNED float *buff, int bufferLen)
 	{
-		float maxVal = buff[0];
-		for (int i = 1; i < bufferLen; i++)
-			if (buff[i] > maxVal) maxVal = buff[i];
-		for (int i = 1; i < bufferLen; i++)
-			buff[i] /= maxVal;
+		assert(bufferLen % 8 == 0);
+		__m256 maxVal = _mm256_setzero_ps();
+		for (int i = 0; i < bufferLen; i += 8)
+			maxVal = _mm256_max_ps(maxVal, _mm256_load_ps(&buff[i]));
+		maxVal = hmax_ps_avx(maxVal);
+
+		__m256 invMaxVal = _mm256_div_ps(_mm256_set1_ps(1.0f), maxVal);
+		for (int i = 0; i < bufferLen; i += 8)
+			_mm256_store_ps(&buff[i], _mm256_mul_ps(_mm256_load_ps(&buff[i]), invMaxVal));
+
+		return _mm256_cvtss_f32(maxVal);
+	}
+
+	_ALIGNED float *GetAlignedCopy(vector<float> &v, int *bufferLen)
+	{
+		int newSize = (v.size() % 8) ? ((v.size() + 7) & ~7) : v.size();
+		_ALIGNED float *buff = (_ALIGNED float*)_aligned_malloc(newSize * sizeof(float), MEM_ALIGNMENT);
+		if (newSize != v.size()) memset(&buff[v.size()], 0, (newSize - v.size()) * sizeof(float));
+		
+		memcpy(buff, &v[0], v.size() * sizeof(float));
+		*bufferLen = newSize; return buff;
 	}
 
 	void Dump(string _responseFile, string _bufferFile)
