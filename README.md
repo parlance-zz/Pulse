@@ -1,4 +1,4 @@
-Pulse - Pre/post-processing utility for generating quantized log-normally-distributed spike-intervals from raw audio, and back again.
+Pulse - Pre/post-processing utility for generating quantized log-normally-distributed spike-intervals from raw audio, and back again (C++, AVX2)
 
 How it works:
 - This version's implementation uses a sliding linear DFT and a 128 unit log gabor filter bank.
