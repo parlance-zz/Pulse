@@ -42,7 +42,7 @@ ForEach ($source in $sourceFiles)
 	$errorActionPreference = "SilentlyContinue"
 	while ($true)
 	{
-		try { $existing_processes = get-process ffmpeg } catch { break }
+		try { $existing_processes = get-process pulse } catch { break }
 		if ($existing_processes.Count -ge $MAX_JOBS) { Start-Sleep -s 1 }
 		else { break }
 	}
