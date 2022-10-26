@@ -1,12 +1,11 @@
 $errorActionPreference = "Stop"
 
+# include common dataset parameters
+. ./Common.ps1
 $sourcePath = "Raw"
 $destPath = "Quants"
-$pulsePath = "..\Pulse\x64\Release"
-$MAX_JOBS = 8
 
 $sourceFiles = Get-ChildItem ($sourcePath) -Recurse
-
 ForEach ($source in $sourceFiles)
 {
 	$rawFile = $false

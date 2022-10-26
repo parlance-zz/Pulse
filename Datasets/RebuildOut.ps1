@@ -1,14 +1,11 @@
 $errorActionPreference = "Stop"
 
+# include common dataset parameters
+. ./Common.ps1
 $sourcePath = "Quants"
 $destPath = "Out"
-#$tempPath = "Temp"
-$pulsePath = "..\Pulse\x64\Release"
-#$ffmpegPath = "..\FFMpeg\bin"
-$MAX_JOBS = 8
 
 $sourceFiles = Get-ChildItem ($sourcePath) -Recurse
-
 ForEach ($source in $sourceFiles)
 {
 	$qFile = $false

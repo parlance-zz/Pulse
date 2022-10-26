@@ -1,11 +1,11 @@
+$errorActionPreference = "Stop"
+
+# include common dataset parameters
+. ./Common.ps1
 $sourcePath = "Source"
 $destPath = "Raw"
-$ffmpegPath = "..\FFMpeg\bin"
-
-$tempPath = "Temp\temp" + ([string](Get-Random)) + ".raw"
 
 $sourceFiles = Get-ChildItem ($sourcePath) -Recurse
-
 ForEach ($source in $sourceFiles)
 {
 	$mediaFile = $false
