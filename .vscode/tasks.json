@@ -8,6 +8,7 @@
             "args": [
                 "-march=alderlake",
                 "-O3",
+                "-D NDEBUG",
                 "./Pulse/*.cpp",
                 "-o",
                 "./Pulse/x64/Release/Pulse.exe"
@@ -16,6 +17,7 @@
                 "kind": "build",
                 "isDefault": true
             },
+
         },
         {
             "label": "build debug",
@@ -24,6 +26,7 @@
             "args": [
                 "-g",
                 "-march=alderlake",
+                "-D _DEBUG",
                 "./Pulse/*.cpp",
                 "-o",
                 "./Pulse/x64/Debug/Pulse.exe"
