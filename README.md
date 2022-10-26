@@ -1,5 +1,7 @@
 Pulse - Pre/post-processing utility for generating quantized log-normally-distributed spike-intervals from raw audio, and back again (C++, AVX2)
 
+Oct-25-2022 Update: New default lg params result in considerably improved audio quality and even lower entropy spike intervals.
+
 How it works:
 - This version's implementation uses a sliding linear DFT and a 128 unit log gabor filter bank.
 - The sliding DFT is computed at every offset in the input signal and the log gabor filter bank is sampled.
