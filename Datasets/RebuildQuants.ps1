@@ -51,3 +51,5 @@ ForEach ($source in $sourceFiles)
 	"& $pulsePath/pulse.exe -q $inputPath $outputPath"
 	Start-Process -NoNewWindow -WorkingDirectory "." -FilePath ("$pulsePath/pulse.exe") -ArgumentList "-q `"$($inputPath)`" `"$($outputPath)`""
 }
+
+if ($sourceFiles.count -eq 0) { Write-Host "No input files found." }
