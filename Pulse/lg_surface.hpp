@@ -448,6 +448,8 @@ struct SURFACE
 			int64_t interval = ticks - lgLastSpikeTick[lg];
 			if (interval >= 1)
 			{
+				assert(out_lgP[lg] > 0.0f);
+
 				float phaseDot = (lgX[lg] * out_lgX[lg] + lgY[lg] * out_lgY[lg]) / lgPow[lg];
 				float powRatio = lgPow[lg] / out_lgP[lg];
 				
