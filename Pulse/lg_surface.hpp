@@ -12,24 +12,24 @@
 #include <stdint.h>
 #include <assert.h>
 
-#define _DEBUG_FILTERS
+//#define _DEBUG_FILTERS
 
-#define SURFACE_DFT_LENGTH						2048 //2048
-#define SURFACE_DFT_FILTER_TRUNCATE_THRESHOLD	0.00001f //0.0001f
+#define SURFACE_DFT_LENGTH						6144 
+#define SURFACE_DFT_FILTER_TRUNCATE_THRESHOLD	0.00001f
 
 #define SURFACE_LG_NUM_CHANNELS					1
-#define SURFACE_LG_NUM_UNITS					256   //128 
-#define SURFACE_LG_NUM_OCTAVES					10.0f //8.0f
-#define SURFACE_LG_BANDWIDTH					0.8f  //0.75f
-#define SURFACE_LG_STD							8.0f  //10.0f
+#define SURFACE_LG_NUM_UNITS					256
+#define SURFACE_LG_NUM_OCTAVES					10.8f 
+#define SURFACE_LG_BANDWIDTH					1.0f //0.82f  
+#define SURFACE_LG_STD							8.1f //7.7f
 
 #define SURFACE_INPUT_DFT_NOISE					0.00001f
 #define SURFACE_OUTPUT_DFT_NOISE				0.00001f
 
 #define SURFACE_LG_SPIKE_MIN_POW				0.00001f
 #define SURFACE_LG_SPIKE_THRESHOLD				1.0f 
-#define SURFACE_LG_SPIKE_POW_RATIO				1.618f //2.0f
-#define SURFACE_LG_SPIKE_DECAY					0.88f  //0.95f
+#define SURFACE_LG_SPIKE_POW_RATIO				1.41f  //1.618f
+#define SURFACE_LG_SPIKE_DECAY					0.91f  //0.88f
 
 #define MEM_ALIGNMENT		64
 #define _ALIGNED		   
