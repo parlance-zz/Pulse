@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "-march=alderlake",
+                "-march=native",
                 "-O3",
                 "-D NDEBUG",
                 "./Pulse/*.cpp",
@@ -25,7 +25,7 @@
             "command": "g++",
             "args": [
                 "-g",
-                "-march=alderlake",
+                "-march=native",
                 "-D _DEBUG",
                 "./Pulse/*.cpp",
                 "-o",
