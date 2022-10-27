@@ -12,34 +12,37 @@
 #include <stdint.h>
 #include <assert.h>
 
-//#define _DEBUG_FILTERS
+#ifdef _DEBUG
+#define _DEBUG_FILTERS
+#endif
 
 #define SURFACE_DFT_LENGTH						6144 
 #define SURFACE_DFT_FILTER_TRUNCATE_THRESHOLD	0.00001f
 
-#define SURFACE_LG_NUM_CHANNELS					1
-#define SURFACE_LG_NUM_UNITS					256
-#define SURFACE_LG_NUM_OCTAVES					10.85f 
-#define SURFACE_LG_BANDWIDTH					1.0f //0.82f  
-#define SURFACE_LG_STD							8.0f //7.7f
+#define SURFACE_LG_NUM_CHANNELS			1
+#define SURFACE_LG_NUM_UNITS			256
+#define SURFACE_LG_NUM_OCTAVES			10.85f 
+#define SURFACE_LG_BANDWIDTH			1.0f
+#define SURFACE_LG_STD					8.0f
 
-#define SURFACE_INPUT_DFT_NOISE					0.00001f
-#define SURFACE_OUTPUT_DFT_NOISE				0.00001f
+#define SURFACE_INPUT_DFT_NOISE			0.00001f
+#define SURFACE_OUTPUT_DFT_NOISE		0.00001f
 
-#define SURFACE_LG_SPIKE_MIN_POW				0.00001f
-#define SURFACE_LG_SPIKE_THRESHOLD				1.0f 
-#define SURFACE_LG_SPIKE_POW_RATIO				1.55f  //1.618f
-#define SURFACE_LG_SPIKE_DECAY					0.88f  //0.88f
+#define SURFACE_LG_SPIKE_MIN_POW		0.00001f
+#define SURFACE_LG_SPIKE_THRESHOLD		1.0f 
+#define SURFACE_LG_SPIKE_POW_RATIO		1.55f
+#define SURFACE_LG_SPIKE_DECAY			0.88f
 
 #define MEM_ALIGNMENT		64
 #define _ALIGNED		   
 
 #ifndef M_PI
-#define M_PI	3.1415926535897932384626433832795f
+#define M_PI	3.141592653589793238462643383f
 #endif
 
 using namespace std;
 
+// avx2 "horizontal" reduction helper functions
 inline float hsum_ps_sse3(const __m128 v)
 {
 	__m128 shuf = _mm_movehdup_ps(v);
@@ -66,8 +69,9 @@ inline __m256 hmax_ps_avx(const __m256 v1)
 	return _mm256_insertf128_ps(_mm256_castps128_ps256(v7), v7, 1);
 }
 
-struct LG_PARAMS { float q, std, gain, outWeight, decay; };
+struct LG_PARAMS { float q, std, gain, outWeight, decay; }; // log normal filter parameters
 
+// construct, sample, and scatter a log normal filter set
 struct FILTER_SET
 {
 	int numFilters;
@@ -111,6 +115,7 @@ struct FILTER_SET
 			filterGain[lg] = lgParams[lg].gain;
 			filterScale[lg] = 1.0f / filterGain[lg];
 
+			// calculate filter kernel
 			for (int q = 0; q < dftLength; q++)
 			{
 				float dftQ = float(q + 0.5f) / float(dftLength);
@@ -120,6 +125,7 @@ struct FILTER_SET
 				normalizedResponse[q] += response[q] * filterGain[lg];
 			}
 
+			// crop filter kernel to truncate threshold
 			int filterStart, filterEnd; float pow = 0.0f;
 			for (filterStart = 0; filterStart < dftLength; filterStart++)
 			{
@@ -135,7 +141,7 @@ struct FILTER_SET
 			filterEnd = ((filterEnd + 7) / 8) * 8;
 			if (filterEnd < (filterStart + 8)) filterEnd = filterStart + 8;
 			
-			filterLength[lg] = (filterEnd - filterStart); assert(filterLength[lg] >= 8);
+			filterLength[lg] = (filterEnd - filterStart); _ASSERT(filterLength[lg] >= 8);
 			filterBufferOffset[lg] = filterBufferLength;
 			filterDFTOffset[lg] = filterStart;
 
@@ -145,11 +151,12 @@ struct FILTER_SET
 		}
 
 		filterBuffer = (float*)_aligned_realloc(filterBuffer, filterBufferLength * sizeof(float), MEM_ALIGNMENT);
-		for (int s = 0; s < filterBufferLength; s++) if (s & 1) filterBuffer[s] *= -1.0f;
-
+		for (int s = 0; s < filterBufferLength; s++) if (s & 1) filterBuffer[s] *= -1.0f; // rotate phase of filters by 180 degrees
+																						  // to sample from the middle of the DFT window
 		_aligned_free(response);
 	}
 
+	// sample an lg filter's response from 2 reference DFTs
 	void Sample2(const int lg, const float *dftX, const float *dftY, float *outX, float *outY, const float *dftX2, const float *dftY2, float *outX2, float *outY2)
 	{
 		int q = filterDFTOffset[lg];
@@ -175,6 +182,7 @@ struct FILTER_SET
 		*outY2 = hsum256_ps_avx(_lgy2) * filterSampleScale;
 	}
 
+	// scatter / mix lg filter into a reference DFT
 	void Scatter(const int lg, const float x, const float y, float *dftX, float *dftY)
 	{
 		__m256 magX = _mm256_set1_ps(x * filterScale[lg]), magY = _mm256_set1_ps(y * filterScale[lg]);
@@ -192,9 +200,10 @@ struct FILTER_SET
 		}
 	}
 
+	// rescale buffer to 1.
 	float Normalize(_ALIGNED float *buff, int bufferLen)
 	{
-		assert(bufferLen % 8 == 0);
+		_ASSERT(bufferLen % 8 == 0);
 		__m256 maxVal = _mm256_setzero_ps();
 		for (int i = 0; i < bufferLen; i += 8)
 			maxVal = _mm256_max_ps(maxVal, _mm256_load_ps(&buff[i]));
@@ -207,6 +216,7 @@ struct FILTER_SET
 		return _mm256_cvtss_f32(maxVal);
 	}
 
+	// create an aligned memory copy of a given vector<float>. buffer will be zero-padded to 256 bits
 	_ALIGNED float *GetAlignedCopy(vector<float> &v, int *bufferLen)
 	{
 		int newSize = (v.size() % 8) ? ((v.size() + 7) & ~7) : v.size();
@@ -217,13 +227,14 @@ struct FILTER_SET
 		*bufferLen = newSize; return buff;
 	}
 
+	// dump filters and calculated total filter response to float32 2-channel raw files
 	void Dump(string _responseFile, string _bufferFile)
 	{
 		Normalize(totalResponse, dftLength);
 		Normalize(normalizedResponse, dftLength);
 
 		FILE *responseFile = fopen(_responseFile.c_str(), "wb");
-		for (int q = 0; q < dftLength; q++)
+		for (int q = 0; q < dftLength; q++) 
 		{
 			fwrite(&totalResponse[q], 1, sizeof(float), responseFile);
 			fwrite(&normalizedResponse[q], 1, sizeof(float), responseFile);
@@ -278,23 +289,19 @@ struct SURFACE
 
 	float inline Randf() { return (rng() & 0xFFFFFF) / float(0xFFFFFF); }
 
+	// very simple (non-optimal) quantization
 	inline uint8_t QuantizeInterval(int64_t interval)
 	{
-		//int qInterval = int(2.078087 * log(interval) + 1.672276 + 0.5) - 2;
 		int qInterval = int(16.0 * log(interval));
 		if (qInterval > 255) qInterval = 255; if (qInterval < 0) qInterval = 0;
-
 		return uint8_t(qInterval);
 	}
+	inline int64_t DequantizeInterval(uint8_t qInterval) { return exp(qInterval / 16.0); }
 
-	inline int64_t DequantizeInterval(uint8_t qInterval)
-	{
-		//return int64_t((pow(M_PHI, qInterval + 2) - pow(M_PHI - 1.0, qInterval + 2)) / M_RT5 + 0.5);
-		return exp(qInterval / 16.0);
-	}
-
+	// initialize filters as well as both the input and output sliding DFTs
 	void Init()
 	{
+		// init sliding DFTs
 		_ASSERT((SURFACE_DFT_LENGTH % 8) == 0);
 		_ASSERT((SURFACE_LG_NUM_UNITS % 8) == 0);
 
@@ -304,10 +311,10 @@ struct SURFACE
 		
 		dftTX = (float*)_aligned_malloc(SURFACE_DFT_LENGTH * sizeof(float), MEM_ALIGNMENT);
 		dftTY = (float*)_aligned_malloc(SURFACE_DFT_LENGTH * sizeof(float), MEM_ALIGNMENT);
-		for (int q = 0; q < SURFACE_DFT_LENGTH; q++)
+		for (int q = 0; q < SURFACE_DFT_LENGTH; q++) // calculate sliding dft "complex IIRs"
 		{
 			float dftQ = float(q + 0.5f) / float(SURFACE_DFT_LENGTH);
-			dftTX[q] = cosf(dftQ * float(M_PI));
+			dftTX[q] = cosf(dftQ * float(M_PI)); 
 			dftTY[q] = sinf(dftQ * float(M_PI));
 		}
 
@@ -324,31 +331,27 @@ struct SURFACE
 		out_lgPow = (float*)_aligned_malloc(SURFACE_LG_NUM_UNITS * sizeof(float), MEM_ALIGNMENT); memset(out_lgPow, 0, SURFACE_LG_NUM_UNITS * sizeof(float));
 		out_lgP = (float*)_aligned_malloc(SURFACE_LG_NUM_UNITS * sizeof(float), MEM_ALIGNMENT); memset(out_lgP, 0, SURFACE_LG_NUM_UNITS * sizeof(float));
 
+		// init lg filter parameters
 		lgParams = (LG_PARAMS*)malloc(sizeof(LG_PARAMS) * SURFACE_LG_NUM_UNITS);
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg++)
 		{
 			float x = 1.0f - float(lg) / float(SURFACE_LG_NUM_UNITS - 1);
 			lgParams[lg].q = exp2f(-x * SURFACE_LG_NUM_OCTAVES) * SURFACE_LG_BANDWIDTH;
-			//lgParams[lg].std = SURFACE_LG_MIN_DEVIATION * powf(lgParams[lg].q, SURFACE_LG_STD_SCALE) / powf(lgParams[0].q, SURFACE_LG_STD_SCALE);
 			lgParams[lg].std = SURFACE_LG_STD;
-			lgParams[lg].gain = 1.0f;//powf(lgParams[lg].q, SURFACE_LG_STD_SCALE);
-			//lgParams[lg].decay = powf(SURFACE_LG_SPIKE_DECAY, powf(lgParams[lg].q, SURFACE_LG_STD_SCALE));
+			lgParams[lg].gain = 1.0f;
 			lgParams[lg].decay = SURFACE_LG_SPIKE_DECAY;
-			lgParams[lg].outWeight = 1.0f;// / powf(lgParams[lg].q, 0.1f);// / powf(lgParams[lg].q, 0.25f);//powf(lgParams[lg].gain, 0.25f);
-			//lgParams[lg].outWeight = powf(lgParams[lg].gain, 0.5f);
+			lgParams[lg].outWeight = 1.0f;
 		}
-
 		lgFilters.Init(SURFACE_LG_NUM_UNITS, SURFACE_DFT_LENGTH, SURFACE_DFT_FILTER_TRUNCATE_THRESHOLD, lgParams);
-		
 #ifdef _DEBUG_FILTERS
 		lgFilters.Dump("totalResponse.raw", "filterBuffer.raw");
 #endif
 
+		// spike intervals for each filter are stored in a per filter vector/list
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg++) lgSpikeIntervals[lg].clear();
 		lgLastSpikeTick = (int64_t*)_aligned_malloc(SURFACE_LG_NUM_UNITS * sizeof(int64_t), MEM_ALIGNMENT); memset(lgLastSpikeTick, 0, SURFACE_LG_NUM_UNITS * sizeof(int64_t));
 		lgSpikeCount = (int64_t*)_aligned_malloc(SURFACE_LG_NUM_UNITS * sizeof(int64_t), MEM_ALIGNMENT); memset(lgSpikeCount, 0, SURFACE_LG_NUM_UNITS * sizeof(int64_t));
 
-		//rng.seed(uint32_t(time(NULL)));
 		totalActivity = 0;
 		ticks = 0;
 	}
@@ -370,7 +373,6 @@ struct SURFACE
 	}
 
 	// sliding dft with avx2
-
 	void SlidingDFT_AVX_InOut()
 	{
 		__m256 inX = _mm256_set1_ps(-lastDFTInX), _lastInX = _mm256_setzero_ps();
@@ -409,16 +411,19 @@ struct SURFACE
 		lastDFTOutX = hsum256_ps_avx(_lastOutX) / float(SURFACE_DFT_LENGTH);
 	}
 
+	// process a single sample from the input signal
 	void Input(const float sample)
 	{
-		noise = (Randf() - 0.5f);
+		noise = (Randf() - 0.5f); // uniform (white) noise is required to noise all dft bins equally
 		lastDFTOutX += noise * SURFACE_OUTPUT_DFT_NOISE;
 		lastDFTInX -= sample - noise * SURFACE_INPUT_DFT_NOISE;
-		SlidingDFT_AVX_InOut();
+		SlidingDFT_AVX_InOut(); // advance sliding DFTs by one step with the new input sample
 
+		// sample lg filter responses from both the input and output DFTs
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg++)
 			lgFilters.Sample2(lg, dftX, dftY, &lgX[lg], &lgY[lg], out_dftX, out_dftY, &out_lgX[lg], &out_lgY[lg]);
 
+		// compute the abs power of each filter response
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg += 8)
 		{
 			__m256 _lgx = _mm256_load_ps(&lgX[lg]), _lgy = _mm256_load_ps(&lgY[lg]);
@@ -446,15 +451,15 @@ struct SURFACE
 			}
 
 			int64_t interval = ticks - lgLastSpikeTick[lg];
-			if (interval >= 1)
+			if (interval >= 1) // spike cooldown
 			{
-				assert(out_lgP[lg] > 0.0f);
+				_ASSERT(out_lgP[lg] > 0.0f);
 
 				float phaseDot = (lgX[lg] * out_lgX[lg] + lgY[lg] * out_lgY[lg]) / lgPow[lg];
 				float powRatio = lgPow[lg] / out_lgP[lg];
 				
-				if ((phaseDot * powRatio) > SURFACE_LG_SPIKE_THRESHOLD)
-				{
+				if ((phaseDot * powRatio) > SURFACE_LG_SPIKE_THRESHOLD) // if the abs power difference ratio exceeds our preset
+				{														// preset threshold, generate a new spike
 					uint8_t qInterval = QuantizeInterval(interval);
 					int64_t dq = DequantizeInterval(qInterval);
 					lgLastSpikeTick[lg] += dq;
@@ -463,20 +468,23 @@ struct SURFACE
 					lgSpikeCount[lg]++;
 					totalActivity++;
 
-					out_lgP[lg] *= SURFACE_LG_SPIKE_POW_RATIO;
+					out_lgP[lg] *= SURFACE_LG_SPIKE_POW_RATIO; // the power of the spike is proportional to the current abs power
 				}
 			}
 
+			// mix/scatter the filter response into the output DFT
 			out_lgP[lg] *= lgParams[lg].decay;
 			if (out_lgP[lg] < SURFACE_LG_SPIKE_MIN_POW) out_lgP[lg] = SURFACE_LG_SPIKE_MIN_POW;
 			else lgFilters.Scatter(lg, out_lgX[lg] * out_lgP[lg], out_lgY[lg] * out_lgP[lg], out_dftX, out_dftY);
 
-			lastLGOut += out_lgY[lg] * out_lgPow[lg] * lgParams[lg].outWeight;
+			lastLGOut += out_lgY[lg] * out_lgPow[lg] * lgParams[lg].outWeight;  // the output value for each timestep is the sum
+		  																		// of the weighted filter responses (from the output DFT)
 		}
 
 		ticks++;
 	}
 
+	// similar to above but uses pre-loaded quantized spike intervals rather than an input signal
 	float Output()
 	{
 		noise = (Randf() - 0.5f);
@@ -536,6 +544,7 @@ struct SURFACE
 		return lastLGOut;
 	}
 
+	// save and load quantized spike intervals
 	bool SaveQuants(string outputPath)
 	{
 		FILE *outFile = fopen(outputPath.c_str(), "wb");
@@ -561,7 +570,7 @@ struct SURFACE
 		FILE *inFile = fopen(inputPath.c_str(), "rb");
 
 		memset(lgSpikeCount, 0, SURFACE_LG_NUM_UNITS * sizeof(uint64_t));
-		uint64_t numLGs; fread(&numLGs, 1, sizeof(uint64_t), inFile); assert(numLGs == SURFACE_LG_NUM_UNITS);
+		uint64_t numLGs; fread(&numLGs, 1, sizeof(uint64_t), inFile); _ASSERT(numLGs == SURFACE_LG_NUM_UNITS);
 		size_t sampleLength; fread(&sampleLength, 1, sizeof(uint64_t), inFile);
 
 		for (int lg = 0; lg < SURFACE_LG_NUM_UNITS; lg++)
