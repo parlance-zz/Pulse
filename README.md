@@ -1,5 +1,7 @@
 Pulse - Pre/post-processing utility for generating quantized log-normally-distributed spike-intervals from raw audio, and back again (C++, AVX2)
 
+<img src="https://raw.githubusercontent.com/parlance-zz/Pulse/raw/master/pulse_demo.png"/>
+
 Oct-25-2022 Update: New default lg params result in considerably improved audio quality and even lower entropy spike intervals.
 
 How it works:
@@ -26,3 +28,4 @@ Caveats:
     - SURFACE_LG_SPIKE_DECAY
 - The utility does not compress the quantized interval files (which can get a bit large due to the number of lg filters and lack of unused bit reduction in serialization). The less overall "spike density" the more compressible these files would theoretically be.
 - Because this version uses a linear sliding DFT (as opposed to log-linear), low frequencies are difficult to sample without sacrificing performance or losing fidelity. As a result, frequencies < 50hz are fairly weak with the default LG filter bank settings in this repo (although you could just use a regular filter in post to strengthen them). The issue is we _do_ want very very low frequencies for a high quality generative model, not because they are audible or perceptible, but because including them in the intermediate representation allows the generator to do what it needs to do to create high quality music.
+
