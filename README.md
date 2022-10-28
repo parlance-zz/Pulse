@@ -1,6 +1,6 @@
 Pulse - Pre/post-processing utility for generating quantized log-normally-distributed spike-intervals from raw audio, and back again (C++, AVX2)
 
-<img src="https://raw.githubusercontent.com/parlance-zz/Pulse/raw/master/pulse_demo.png"/>
+<img src="https://github.com/parlance-zz/Pulse/raw/master/pulse_demo.png"/>
 
 Oct-25-2022 Update: New default lg params result in considerably improved audio quality and even lower entropy spike intervals.
 
