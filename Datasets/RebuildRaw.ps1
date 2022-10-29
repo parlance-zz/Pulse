@@ -49,8 +49,8 @@ ForEach ($source in $sourceFiles)
 	}
 	$errorActionPreference = "Stop"
 
-	"$ffmpegPath/ffmpeg.exe -y -i $inputPath -af loudnorm=I=-16:LRA=11:TP=-1.5 -ac 1 -ar 48000 -f f32le $outputPath"
-	Start-Process -NoNewWindow -WorkingDirectory "." -FilePath ("$ffmpegPath/ffmpeg.exe") -ArgumentList "-y -i `"$($inputPath)`" -af loudnorm=I=-16:LRA=11:TP=-1.5 -ac 1 -ar 48000 -f f32le  `"$($outputPath)`""
+	"& $ffmpegPath -y -i $inputPath -af loudnorm=I=-16:LRA=11:TP=-1.5 -ac 1 -ar 48000 -f f32le $outputPath"
+	Start-Process -NoNewWindow -WorkingDirectory "." -FilePath $ffmpegPath -ArgumentList "-y -i `"$($inputPath)`" -af loudnorm=I=-16:LRA=11:TP=-1.5 -ac 1 -ar 48000 -f f32le  `"$($outputPath)`""
 }
 
 if ($sourceFiles.count -eq 0) { Write-Host "No input files found." }

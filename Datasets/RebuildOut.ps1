@@ -48,8 +48,8 @@ ForEach ($source in $sourceFiles)
 	}
 	$errorActionPreference = "Stop"
 
-	"& $pulsePath/pulse.exe -d $inputPath $outputPath"
-	Start-Process -NoNewWindow -WorkingDirectory "." -FilePath ("$pulsePath/pulse.exe") -ArgumentList "-d `"$($inputPath)`" `"$($outputPath)`""
+	"& $pulsePath -d $inputPath $outputPath"
+	Start-Process -NoNewWindow -WorkingDirectory "." -FilePath $pulsePath -ArgumentList "-d `"$($inputPath)`" `"$($outputPath)`""
 }
 
 if ($sourceFiles.count -eq 0) { Write-Host "No input files found." }

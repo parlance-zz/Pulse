@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	printf("Usage:\tpulse.exe -q input.raw output.q\n\tpulse.exe -d input.q output.raw\n\n");
+	printf("Usage:\tpulse -q input.raw output.q\n\tpulse.exe -d input.q output.raw\n\n");
 	return 1;
 }
 
