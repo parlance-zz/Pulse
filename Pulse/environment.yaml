@@ -9,6 +9,7 @@ dependencies:
   - pytorch::pytorch  
   - pip
   - numpy
+  - scipy
   - pip:
     - opencv-python
     - diffusers
