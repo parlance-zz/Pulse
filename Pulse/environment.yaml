@@ -1,0 +1,14 @@
+name: pulse
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python
+  - nvidia::cudatoolkit
+  - pytorch::pytorch  
+  - pip
+  - numpy
+  - pip:
+    - opencv-python
+    - diffusers
