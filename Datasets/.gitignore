@@ -2,3 +2,4 @@
 *.flac
 *.raw
 *.q
+__pycache__/
